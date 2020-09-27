@@ -1,0 +1,91 @@
+
+    <!-- Collapsable Card -->
+    <div class="card shadow mb-4">
+        <a href="#collapseCard_dataset" class="d-block card-header py-3" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapseCard_dataset">
+            <h6 class="m-0 font-weight-bold text-dark">Dataset</h6>
+        </a>
+
+          <div class="card-body">
+
+            <h6 class="m-0 font-weight-bold text-dark">Select Database</h6>
+
+            <div class="my-2"></div>
+              <div class="row">
+
+                <!-- Area Chart -->
+                <div class="col-xl-4 col-lg-4">
+                      <div class="card btn dataset-select" id="upload">
+                        <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                              <div class="text-xs font-weight-bold text-secondary text-uppercase text-left mb-1">Upload data</div>
+                              <div class="small mb-0 text-gray-800 text-left">Upload user's own data. If data is uploaded from a .xlsx or .xls file, separator can be any value, but please make sure data are located in Sheet1.</div>
+                            </div>
+                            <div class="col-auto">
+                              <i class="fas fa-arrow-right fa-2x text-gray-300"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    <div class="my-2"></div>
+
+                      <div class="card btn dataset-select" id="GEO">
+                        <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                              <div class="text-xs font-weight-bold text-success text-uppercase text-left mb-1">NCBI GEO</div>
+                              <div class="small mb-0 text-gray-800 text-left">GEO is a public functional genomics data repository supporting MIAME-compliant data submissions.</div>
+                            </div>
+                            <div class="col-auto">
+                              <i class="fas fa-arrow-right fa-2x text-gray-300"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    <div class="my-2"></div>
+
+                      <div class="card btn dataset-select" id="TCGA">
+                        <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                              <div class="text-xs font-weight-bold text-info text-uppercase text-left mb-1">TCGA</div>
+                              <div class="small mb-0 text-gray-800 text-left">The Cancer Genome Atlas (TCGA), a landmark cancer genomics program, molecularly characterized over 20,000 primary cancer and matched normal samples spanning 33 cancer types.</div>
+                            </div>
+                            <div class="col-auto">
+                              <i class="fas fa-arrow-right fa-2x text-gray-300"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                </div>
+
+                <div class="col-xl-8 col-lg-8">
+                    <div id="datasetlayout"></div>
+                </div>
+
+              </div>
+
+          </div>
+    </div>
+
+<script type="text/javascript">
+    function _removeClasses(elements, class2remove) {
+      for (var i = 0; i < elements.length; i++) {
+        elements[i].classList.remove(class2remove);
+      }
+    }
+
+    $('.dataset-select').on("click",function(){
+        var dataset =  $(this).attr("id");
+        console.log('clicked ' + dataset);
+        _removeClasses(document.querySelectorAll('.dataset-select'), 'bg-light');
+        $('.dataset-select#' + dataset).addClass('bg-light');
+        $( "#datasetlayout" ).load( "html/project/TSUNAMI/dataset_" + dataset + ".html");
+    })
+    $( "#datasetlayout" ).load( "html/project/TSUNAMI/dataset_upload.html");
+
+
+</script>

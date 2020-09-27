@@ -1,0 +1,256 @@
+
+    <!-- Collapsable Card -->
+    <div class="card shadow mb-4">
+        <a href="#collapseCard_dataset" class="d-block card-header py-3" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapseCard_dataset">
+            <h6 class="m-0 font-weight-bold text-dark">Analysis</h6>
+        </a>
+        <div class="card-body">
+          <h6 class="m-0 font-weight-bold text-dark mb-4">lmQCM</h6>
+
+          <form>
+            <div class="form-row">
+              <div class="col-md-4 mr-4 mb-4">
+                <label for="lmQCM_gamma">gamma (γ):</label>
+                <input type="text" class="form-control" id="lmQCM_gamma" value="0.7" required>
+                <label for="lmQCM_t">t:</label>
+                <input type="text" class="form-control" id="lmQCM_t" value="1" required>
+                <label for="lmQCM_minClusterSize">Minimum cluster size:</label>
+                <input type="text" class="form-control" id="lmQCM_minClusterSize" value="10" required>
+              </div>
+              <div class="col-md-4 mb-4">
+                <label for="lmQCM_lambda">lambda (λ):</label>
+                <input type="text" class="form-control" id="lmQCM_lambda" value="1" required>
+                <label for="lmQCM_beta">beta (β):</label>
+                <input type="text" class="form-control" id="lmQCM_beta" value="0.4" required>
+                <label for="lmQCM_CCmethod">Calculation of correlation coefficient:</label>
+
+                <select class="custom-select" id="lmQCM_CCmethod" required>
+                  <option value="Pearson">Pearson</option>
+                  <option value="Spearman">Spearman</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row mb-4">
+              <div class="custom-control custom-checkbox mr-sm-2">
+                <input type="checkbox" class="custom-control-input" id="lmQCM_normalization">
+                <label class="custom-control-label" for="lmQCM_normalization">Normalization</label>
+              </div>
+            </div>
+            <button class="btn btn-primary TSUNAMI" onclick="submitform_lmQCM()" type="submit">Run</button>
+          </form>
+
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+      <div class="card-header">
+          <b>Results</b>
+      </div>
+      <div class="card-body">
+
+
+        <h6 class="m-0 font-weight-bold text-dark mb-4">Download</h6>
+        
+        <button class="btn btn-outline-primary" onclick="download('processed_data')"><i class="fa fa-download"></i> Processed Data</button>
+        <button class="btn btn-outline-primary" onclick="download('coexpression_modules')"><i class="fa fa-download"></i> Co-expression Modules</button>
+        <button class="btn btn-outline-primary" onclick="download('eigengene_matrix')"><i class="fa fa-download"></i> Eigengene Matrix</button>
+
+
+        <hr>
+        <h6 class="m-0 font-weight-bold text-dark mb-4">Co-expression Modules</h6>
+        
+        <div id="DT_lmQCM_modules_container"></div>
+
+      </div>
+        
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="runlmQCMModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Running lmQCM algorithm ...</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body bg-light">
+            <img src="imgs/loading4.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+<script type="text/javascript">
+
+  var projectinfo = null;
+  $(document).ready(function(){
+    //get project information from PHP session
+    $.ajax({
+        type: 'post',
+        url: 'php/get_projects.php',
+        data: {},
+        success: function(data) {
+            //console.log(data);
+            var string = data.substring(data.indexOf("{"));
+            jsonstring = JSON.parse(string);
+            projID = jsonstring.projID;
+            results = JSON.parse(jsonstring.results);
+            for(var i = 0; i < results.length; i++) {
+                var obj = results[i];
+                if (projID == obj.ProjectID){
+                    projectinfo = {
+                        'ProjectID': obj.ProjectID,
+                        'ProjectName': obj.ProjectName,
+                        'Application': obj.Application,
+                        'DateLastAccess': obj.DateLastAccess,
+                        'DateCreated': obj.DateCreated,
+                        'OwnerEmail': obj.OwnerEmail,
+                        'CollaboratorEmails': obj.CollaboratorEmails,
+                        'Description': obj.Description,
+                    }
+                    break;
+                }
+            }
+        },
+        error: function(e) {
+            console.log(e);
+        }
+    });
+  });
+
+  function submitform_lmQCM(){
+    console.log('submit form');
+    $('.TSUNAMI').attr("disabled", "disabled");
+
+    var lmQCM_lambda = parseFloat($('#lmQCM_lambda').val());
+    var lmQCM_t = parseFloat($('#lmQCM_t').val());
+    var lmQCM_minClusterSize = parseFloat($('#lmQCM_minClusterSize').val());
+    var lmQCM_gamma = parseFloat($('#lmQCM_gamma').val());
+    var lmQCM_beta = parseFloat($('#lmQCM_beta').val());
+    var lmQCM_CCmethod = $('#lmQCM_CCmethod').val();
+    var lmQCM_normalization = $('#lmQCM_normalization').is(":checked") ? 1 : 0;
+
+    console.log(lmQCM_lambda);
+    console.log(lmQCM_t);
+    console.log(lmQCM_minClusterSize);
+    console.log(lmQCM_gamma);
+    console.log(lmQCM_beta);
+    console.log(lmQCM_CCmethod);
+    console.log(lmQCM_normalization);
+
+
+    $("#runlmQCMModal").modal()
+    var contentURL = '/php/analysis_lmQCM.php?project_id='+projectinfo.ProjectID 
+                      + '&lmQCM_lambda=' + lmQCM_lambda
+                      + '&lmQCM_t=' + lmQCM_t
+                      + '&lmQCM_minClusterSize=' + lmQCM_minClusterSize
+                      + '&lmQCM_gamma=' + lmQCM_gamma
+                      + '&lmQCM_beta=' + lmQCM_beta
+                      + '&lmQCM_CCmethod=' + lmQCM_CCmethod
+                      + '&lmQCM_normalization=' + lmQCM_normalization;
+    console.log(contentURL);
+    $.ajax({
+        method: "POST",
+        url: 'php/grabber.php',
+        data: {'url': contentURL},
+        success: function (data) {
+          console.log(data);
+          var lines = data.trim().split('\n');
+          var lastLine = lines.slice(-1)[0].replace(/'/g, '"');
+          
+          if (JSON.parse(lastLine)['status'] == "success"){
+            $('#runlmQCMModal').modal('hide');
+            $('#toast-run-lmQCM').toast('show');
+            read_lmQCM_results(projectinfo.ProjectID);
+          }
+          else {
+            alert('error!');
+          }
+          $('.TSUNAMI').removeAttr("disabled", "disabled");
+        },
+        error: function (req, err) {
+          console.log(err);
+          $('.TSUNAMI').removeAttr("disabled", "disabled");
+        }
+    });
+    
+  }
+
+
+  function arrayToTable_modules(tableData) {
+      var table = $('<table class="table table-bordered" id="DT_lmQCM_modules" width="100%" cellspacing="0"></table>');
+      // table head
+      var thead = $('<thead></thead>');
+      var row = $('<tr></tr>');
+      row.append($('<th>ID</th>'));
+      row.append($('<th>Number of genes</th>'));
+      row.append($('<th>Module genes</th>'));
+      thead.append(row);
+      table.append(thead);
+      // table body
+      var tableBody = tableData.slice(0);
+      var tbody = $('<tbody></tbody>');
+      $(tableBody).each(function (i, rowData) {
+          var row = $('<tr></tr>');
+          content = rowData.join(', ');
+          if (content.length > 0){
+            row.append($('<td>'+(i+1)+'</td>'));
+            row.append($('<td>'+rowData.length+'</td>'));
+            row.append($('<td>'+content+'</td>'));
+            tbody.append(row);
+          }
+      });
+      table.append(tbody);
+      return table;
+  }
+
+
+  function read_lmQCM_results(pid){
+    var contentURL = '/userdata/projects/'+pid+'/lmQCM_cluster_names.txt';
+    console.log(contentURL);
+    $.ajax({
+        type: "POST",
+        url: 'php/grabber.php',
+        data: {'url': contentURL},
+        success: function (data) {
+            var ndarray = Papa.parse(data,{delimiter: ", "}).data;
+            console.log(ndarray);
+            var table = arrayToTable_modules(ndarray)[0];
+            //console.log(table);
+            $('#DT_lmQCM_modules_container').empty();
+            $('#DT_lmQCM_modules_container').append( table );
+            $('#DT_lmQCM_modules').DataTable({
+                "lengthMenu": [[-1, 10, 25, 50], ["All", 10, 25, 50]],
+                deferRender:    true,
+                scrollY:        400,
+                scrollCollapse: true,
+                scroller:       true
+            });
+            $('#toast-tcga-list').toast('show');
+
+        }
+    });
+  }
+
+  function download(filetype) {
+    var fname;
+    if (filetype == 'processed_data'){
+      fname = '/userdata/projects/'+projectinfo.ProjectID+'/datamatrix_2.csv';
+    }
+    if (filetype == 'coexpression_modules'){
+      fname = '/userdata/projects/'+projectinfo.ProjectID+'/lmQCM_modules.csv';
+    }
+    if (filetype == 'eigengene_matrix'){
+      fname = '/userdata/projects/'+projectinfo.ProjectID+'/lmQCM_eigengene_matrix.csv';
+    }
+    console.log(fname);
+    window.location.href = fname;
+  }
+</script>

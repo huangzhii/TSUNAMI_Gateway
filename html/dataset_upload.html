@@ -1,0 +1,162 @@
+
+<div class="card mb-4">
+  <!-- Card Header - Dropdown -->
+  <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+    <h6 class="m-0 font-weight-bold">Upload Data</h6>
+  </div>
+  <!-- Card Body -->
+  <div class="card-body">
+
+      <form method="post" enctype="multipart/form-data" id="form_upload_data">
+        <div class="custom-file">
+          <input type="file" class="custom-file-input" id="validatedCustomFile" name="fileToUpload" required>
+          <label class="custom-file-label" for="validatedCustomFile">Choose file...</label>
+        </div>
+        <div class="progress d-none" id='progressBarDiv'>
+          <div class="progress-bar" id='uploadProgressBar' role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <hr>
+
+          <div class="row ml-1">
+              <div class="col-xl-6">
+                Separator:
+                <div class="custom-control custom-radio ">
+                  <input type="radio" id="radio_separator_1" name="radio_separator" class="custom-control-input" checked>
+                  <label class="custom-control-label" for="radio_separator_1">Comma</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="radio_separator_2" name="radio_separator" class="custom-control-input check">
+                  <label class="custom-control-label" for="radio_separator_2">Semicolon</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="radio_separator_3" name="radio_separator" class="custom-control-input">
+                  <label class="custom-control-label" for="radio_separator_3">Tab</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="radio_separator_4" name="radio_separator" class="custom-control-input">
+                  <label class="custom-control-label" for="radio_separator_4">Space</label>
+                </div>
+              </div>
+
+              <div class="col-xl-6">
+                Quote:
+                <div class="custom-control custom-radio ">
+                  <input type="radio" id="radio_quote_1" name="radio_quote" class="custom-control-input">
+                  <label class="custom-control-label" for="radio_quote_1">None</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="radio_quote_2" name="radio_quote" class="custom-control-input" checked>
+                  <label class="custom-control-label" for="radio_quote_2">Double quote</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="radio_quote_3" name="radio_quote" class="custom-control-input">
+                  <label class="custom-control-label" for="radio_quote_3">Single quote</label>
+                </div>
+              </div>
+          </div>
+        <input class="btn btn-primary mt-2 TSUNAMI" type="submit" value="Upload" name="submit">
+        <div class="d-none text-success" id='uploadFinishDiv'>
+          <p>Done.</p>
+        </div>
+
+      </form>
+  </div>
+</div>
+
+<div class="">
+  <p>Warning: Please do not upload Protected health information (PHI) data.</p>
+</div>
+
+<script>
+  $('#validatedCustomFile').on('change',function(){
+      //get the file name
+      var fileName = $(this).val();
+      //replace the "Choose a file" label
+      var cleanFileName = fileName.replace('C:\\fakepath\\', " ");
+      $(this).next('.custom-file-label').html(cleanFileName);
+  })
+
+  $(document).ready(function(){
+
+    var projectinfo = null;
+    //get project information from PHP session
+    $.ajax({
+        type: 'post',
+        url: 'php/get_projects.php',
+        data: {},
+        success: function(data) {
+            //console.log(data);
+            var string = data.substring(data.indexOf("{"));
+            jsonstring = JSON.parse(string);
+            projID = jsonstring.projID;
+            results = JSON.parse(jsonstring.results);
+            for(var i = 0; i < results.length; i++) {
+                var obj = results[i];
+                if (projID == obj.ProjectID){
+                    projectinfo = {
+                        'ProjectID': obj.ProjectID,
+                        'ProjectName': obj.ProjectName,
+                        'Application': obj.Application,
+                        'DateLastAccess': obj.DateLastAccess,
+                        'DateCreated': obj.DateCreated,
+                        'OwnerEmail': obj.OwnerEmail,
+                        'CollaboratorEmails': obj.CollaboratorEmails,
+                        'Description': obj.Description,
+                    }
+                    break;
+                }
+            }
+        },
+        error: function(e) {
+            console.log(e);
+        }
+    });
+
+
+
+
+
+    var $form = $('#form_upload_data');
+    $form.submit(function (e){
+        //Stops submit button from refreshing page.
+        e.preventDefault();
+        $('.TSUNAMI').attr('disabled','disabled');
+        var form_data = new FormData(this);
+        $('#progressBarDiv').removeClass('d-none');
+        $.ajax({
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                  if (evt.lengthComputable) {
+                    var percentComplete = evt.loaded / evt.total;
+                    percentComplete = parseInt(percentComplete * 100);
+                    //console.log(percentComplete);
+                    $('#uploadProgressBar').width(percentComplete+'%');
+                    $('#uploadProgressBar').html(percentComplete+'%');
+
+                  }
+                }, false);
+
+                return xhr;
+            },
+            url: '/php/upload.php?pid=' + projectinfo.ProjectID,
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: form_data,
+            type: 'post',
+            success: function (response)
+                {
+                  console.log(response);
+                  $('#uploadFinishDiv').removeClass('d-none');
+                  $('.TSUNAMI').removeAttr('disabled','disabled');
+                },
+            error: function (req, err)
+                {
+                  console.log(err);
+                  $('.TSUNAMI').removeAttr('disabled','disabled');
+                }
+        });
+    });
+});
+</script>

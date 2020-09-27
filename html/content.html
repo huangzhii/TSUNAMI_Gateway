@@ -1,0 +1,63 @@
+
+<div class="container-fluid">
+
+\
+    <div class="mt-4 mb-4">
+        <img src='imgs/tsunami_logo.png' height="30"></img>
+    </div>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="javascript:return_nav()">Project</a></li>
+        <li class="breadcrumb-item active" id="curr_proj_id"></li>
+    </ol>
+
+
+
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link active" id="dataset_tab" data-toggle="tab" href="#dataset" role="tab" aria-controls="dataset" aria-selected="true">Dataset</a>
+        </li>
+        <li class="nav-item text-secondary"><a class="nav-link"><i class="fas fa-angle-right"></i></a></li>
+        <li class="nav-item">
+            <a class="nav-link" id="pre-process_tab" data-toggle="tab" href="#pre-process" role="tab" aria-controls="pre-process" aria-selected="true">Pre-processing</a>
+        </li>
+        <li class="nav-item text-secondary"><a class="nav-link"><i class="fas fa-angle-right"></i></a></li>
+        <li class="nav-item">
+            <a class="nav-link" id="analysis_tab" data-toggle="tab" href="#analysis" role="tab" aria-controls="analysis" aria-selected="true">Analysis</a>
+        </li>
+    </ul>
+    <hr>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="dataset" role="tabpanel" aria-labelledby="dataset_tab">
+            <div class='mt-4' id="project_dataset"></div>
+        </div>
+
+        <div class="tab-pane fade show " id="pre-process" role="tabpanel" aria-labelledby="pre-process_tab">
+            <div class='mt-4' id="project_preprocessing"></div>
+        </div>
+
+        <div class="tab-pane fade show" id="analysis" role="tabpanel" aria-labelledby="analysis_tab">
+            <div class='mt-4' id="project_analysis"></div>
+        </div>
+    </div>
+
+
+
+</div>
+
+
+<script type="text/javascript">
+    $( "#project_dataset" ).load( "html/project/TSUNAMI/dataset.html");
+    $( "#project_dataview" ).load( "html/project/TSUNAMI/dataview.html");
+    $( "#project_preprocessing" ).load( "html/project/TSUNAMI/preprocessing.html");
+    $( "#project_analysis" ).load( "html/project/TSUNAMI/analysis.html");
+    $('#dropdown-dataview').click(function (e) {
+      e.stopPropagation();
+    });
+
+    $.urlParam = function(name){
+	    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results[1] || 0;
+    }
+
+</script>

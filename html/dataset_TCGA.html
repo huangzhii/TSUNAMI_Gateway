@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+
+<html>
+<div class="card mb-4">
+
+    <!-- Card Header - Dropdown -->
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold">TCGA</h6>
+    </div>
+    <!-- Card Body -->
+        <div class="card-body">
+        <div class="table-responsive">
+            <div id="TCGAtabletoload">
+              <!--button class="btn btn-primary" type="button" disabled>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Loading...
+              </button-->
+              <img src="imgs/loading1.gif" style="display: block; margin-left: auto; margin-right: auto; width: 40%">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Forking data to your project ...</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body bg-light">
+
+        <div class="row align-items-center">
+            <div class="col-xl-4"><a href="#" class="btn btn-light" style="width: 100%">Database</a></div>
+            <div class="col-xl-4">
+              <img src="imgs/arrow1.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%">
+            </div>
+            <div class="col-xl-4"><a href="#" class="btn btn-light" style="width: 100%">Your project repository</a></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</html>
+<script src="assets/demo/chart-area-demo.js"></script>
+<script src="assets/demo/chart-bar-demo.js"></script>
+
+<script type="text/javascript">
+
+    var projectinfo = null;
+    $(document).ready(function(){
+      //get project information from PHP session
+      $.ajax({
+          type: 'post',
+          url: 'php/get_projects.php',
+          data: {},
+          success: function(data) {
+              //console.log(data);
+              var string = data.substring(data.indexOf("{"));
+              jsonstring = JSON.parse(string);
+              projID = jsonstring.projID;
+              results = JSON.parse(jsonstring.results);
+              for(var i = 0; i < results.length; i++) {
+                  var obj = results[i];
+                  if (projID == obj.ProjectID){
+                      projectinfo = {
+                          'ProjectID': obj.ProjectID,
+                          'ProjectName': obj.ProjectName,
+                          'Application': obj.Application,
+                          'DateLastAccess': obj.DateLastAccess,
+                          'DateCreated': obj.DateCreated,
+                          'OwnerEmail': obj.OwnerEmail,
+                          'CollaboratorEmails': obj.CollaboratorEmails,
+                          'Description': obj.Description,
+                      }
+                      break;
+                  }
+              }
+          },
+          error: function(e) {
+              console.log(e);
+          }
+      });
+    });
+    function arrayToTable(tableData) {
+        var table = $('<table class="table table-bordered" id="TCGAdataTable" width="100%" cellspacing="0"></table>');
+        tableData.pop();
+        tableData.pop();
+        // table head
+        var rowHead = tableData[0];
+        var thead = $('<thead></thead>');
+        var row = $('<tr></tr>');
+        row.append($('<th>Actions</th>'));
+        $(rowHead).each(function (j, rowData) {
+            row.append($('<th>'+rowData+'</th>'));
+        });
+        thead.append(row);
+        table.append(thead);
+        // table body
+        var tableBody = tableData.slice(1);
+        var tbody = $('<tbody></tbody>');
+        $(tableBody).each(function (i, rowData) {
+            var row = $('<tr></tr>');
+            var TCGA_cancer = rowData[1];
+            row.append('<td><button onclick=\'loadTCGAdata(\"'+TCGA_cancer+'\")\' class="btn btn-primary btn-sm TSUNAMI"><i class="fas fa-angle-right"></i> Run</button></td>');
+            $(rowData).each(function (j, cellData) {
+                row.append($('<td>'+cellData+'</td>'));
+            });
+            tbody.append(row);
+        });
+        table.append(tbody);
+        return table;
+    }
+
+
+    function loadTCGAdata(cancer) {
+      console.log('Loading ' + cancer + ' data ...');
+      $('.TSUNAMI').attr('disabled','disabled');
+      $("#loadingModal").modal()
+      var contentURL = '/php/get_TCGA.php?project_id='+ projectinfo.ProjectID
+                        + '&data=' + cancer;
+      $.ajax({
+          type: "POST",
+          url: 'php/grabber.php',
+          data: {'url': contentURL},
+          success: function (data) {
+            console.log(data);
+            $('#loadingModal').modal('hide');
+            $('#toast-tcga-load').toast('show')
+            $('.TSUNAMI').removeAttr('disabled','disabled');
+          },
+          error: function (req, err) {
+            console.log(err);
+            $('.TSUNAMI').removeAttr('disabled','disabled');
+          }
+      });
+    }
+
+    var contentURL = '/data/TCGA_gdac_metadata.csv';
+    $.ajax({
+        type: "POST",
+        url: 'php/grabber.php',
+        data: {'url': contentURL},
+        success: function (data) {
+            //console.log(data);
+            var table = arrayToTable(Papa.parse(data).data)[0];
+            //console.log(table);
+            $('#TCGAtabletoload').replaceWith( table );
+            $('#TCGAdataTable').DataTable({
+                "lengthMenu": [[-1, 10, 25, 50], ["All", 10, 25, 50]],
+                deferRender:    true,
+                scrollY:        400,
+                scrollCollapse: true,
+                scroller:       true
+            });
+            $('#toast-tcga-list').toast('show');
+        }
+    });
+
+
+</script>
+

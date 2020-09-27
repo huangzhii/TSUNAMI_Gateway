@@ -1,0 +1,209 @@
+
+    <!-- Collapsable Card -->
+    <div class="card shadow mb-4">
+        <a href="#collapseCard_preprocessing" class="d-block card-header py-3" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapseCard_preprocessing">
+            <h6 class="m-0 font-weight-bold text-dark">Cohort Selection</h6>
+        </a>
+
+          <div class="card-body">
+
+            <form id="preprocess_form">
+              <div class="row">
+
+                <div class="col-xl-6 col-lg-6">
+                  <div class="card">
+                    <div class="card-header">
+                        <b>Expression filtering</b>
+                    </div>
+                    <div class="card-body">
+                      <p>Mean filter</p>
+                      <div class="d-flex justify-content-center my-4">
+                        <input id="slider_mean_filter" class="border-0" type="range" min="0" max="100" value="20" />
+                        <span class="font-weight-bold text-primary ml-2 mt-1 valueSpan_mean_filter"></span>
+                      </div>
+                      <p>Variance filter</p>
+                      <div class="d-flex justify-content-center my-4">
+                        <input id="slider_var_filter" class="border-0" type="range" min="0" max="100" value="20" />
+                        <span class="font-weight-bold text-primary ml-2 mt-1 valueSpan_var_filter"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-xl-6 col-lg-6">
+                  <div class="card">
+                    <div class="card-header">
+                        <b>Other operations</b>
+                    </div>
+                    <div class="card-body">
+                      <div class="custom-control custom-checkbox mr-sm-2 m-2">
+                        <input type="checkbox" class="custom-control-input" id="checkbox_na2zero" checked>
+                        <label class="custom-control-label" for="checkbox_na2zero">Convert NA value to 0 in expression data.</label>
+                      </div>
+                      <div class="custom-control custom-checkbox mr-sm-2 m-2">
+                        <input type="checkbox" class="custom-control-input" id="checkbox_log2">
+                        <label class="custom-control-label" for="checkbox_log2">Take the log₂(x+1) of expression data x (default: unchecked).</label>
+                      </div>
+                      <div class="custom-control custom-checkbox mr-sm-2 m-2">
+                        <input type="checkbox" class="custom-control-input" id="checkbox_remove_empty_gene" checked>
+                        <label class="custom-control-label" for="checkbox_remove_empty_gene">Remove rows with empty gene symbol.</label>
+                      </div>
+                      <div class="custom-control custom-checkbox mr-sm-2 m-2">
+                        <input type="checkbox" class="custom-control-input" id="checkbox_unique_gene" checked>
+                        <label class="custom-control-label" for="checkbox_unique_gene">Keep only one row with largest mean expression value when gene symbol is duplicated.</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              
+              <button type="submit" onclick="start_preprocess()" class="btn btn-primary mt-4 TSUNAMI">Process</button>
+              <div class="text-secondary mb-4" id="form_status">Unprocessed</div>
+            </form>
+
+            <!-- Modal -->
+            <div class="modal fade" id="preprocessModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Pre-processing ...</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body bg-light">
+                    <img src="imgs/loading4.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%">
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+          </div>
+    </div>
+
+<script type="text/javascript">
+
+  var projectinfo = null;
+  $(document).ready(function(){
+    //get project information from PHP session
+    $.ajax({
+        type: 'post',
+        url: 'php/get_projects.php',
+        data: {},
+        success: function(data) {
+            //console.log(data);
+            var string = data.substring(data.indexOf("{"));
+            jsonstring = JSON.parse(string);
+            projID = jsonstring.projID;
+            results = JSON.parse(jsonstring.results);
+            for(var i = 0; i < results.length; i++) {
+                var obj = results[i];
+                if (projID == obj.ProjectID){
+                    projectinfo = {
+                        'ProjectID': obj.ProjectID,
+                        'ProjectName': obj.ProjectName,
+                        'Application': obj.Application,
+                        'DateLastAccess': obj.DateLastAccess,
+                        'DateCreated': obj.DateCreated,
+                        'OwnerEmail': obj.OwnerEmail,
+                        'CollaboratorEmails': obj.CollaboratorEmails,
+                        'Description': obj.Description,
+                    }
+                    break;
+                }
+            }
+        },
+        error: function(e) {
+            console.log(e);
+        }
+    });
+  });
+
+  function start_preprocess(){
+    console.log('start preprocessing');
+    $('.TSUNAMI').attr("disabled", "disabled");
+    var value_mean_filter = parseInt($('#slider_mean_filter').val());
+    var value_var_filter = parseInt($('#slider_var_filter').val());
+    var checkbox_na2zero = $('#checkbox_na2zero').is(":checked") ? 1 : 0;
+    var checkbox_log2 = $('#checkbox_log2').is(":checked") ? 1 : 0;
+    var checkbox_remove_empty_gene = $('#checkbox_remove_empty_gene').is(":checked") ? 1 : 0;
+    var checkbox_unique_gene = $('#checkbox_unique_gene').is(":checked") ? 1 : 0;
+
+    console.log(value_mean_filter);
+    console.log(value_var_filter);
+    console.log(checkbox_na2zero);
+    console.log(checkbox_log2);
+    console.log(checkbox_remove_empty_gene);
+    console.log(checkbox_unique_gene);
+
+
+    $("#preprocessModal").modal()
+      var contentURL = '/php/preprocess.php?project_id=' + projectinfo.ProjectID 
+                        + '&value_mean_filter=' + value_mean_filter
+                        + '&value_var_filter=' + value_var_filter
+                        + '&checkbox_na2zero=' + checkbox_na2zero
+                        + '&checkbox_log2=' + checkbox_log2
+                        + '&checkbox_remove_empty_gene=' + checkbox_remove_empty_gene
+                        + '&checkbox_unique_gene=' + checkbox_unique_gene;
+      console.log(contentURL);
+      $.ajax({
+          type: "POST",
+          url: 'php/grabber.php',
+          data: {'url': contentURL},
+          success: function (data) {
+            console.log(data);
+            var lines = data.trim().split('\n');
+            var lastLine = lines.slice(-1)[0].replace(/'/g, '"');
+            
+            if (JSON.parse(lastLine)['status'] == "success"){
+              $('#preprocessModal').modal('hide');
+              $('#toast-pre-processing').toast('show');
+              $("#form_status").removeClass("text-secondary");
+              $("#form_status").addClass("text-success");
+              $("#form_status").text('Done');
+            }
+            $('.TSUNAMI').removeAttr("disabled", "disabled");
+          },
+          error: function (req, err) {
+            console.log(err);
+            $('.TSUNAMI').removeAttr("disabled", "disabled");
+          }
+      });
+  }
+
+
+
+
+  $(document).ready(function() {
+
+    var form = document.getElementById("preprocess_form");
+
+    form.addEventListener("input", function () {
+        console.log("Form has changed!");
+        $("#form_status").removeClass("text-success");
+        $("#form_status").addClass("text-secondary");
+        $("#form_status").text('Unprocessed');
+    });
+    
+    const $valueSpan_mean_filter = $('.valueSpan_mean_filter');
+    const $value_mean_filter = $('#slider_mean_filter');
+    $valueSpan_mean_filter.html($value_mean_filter.val() + '%');
+    $value_mean_filter.on('input change', () => {
+      $valueSpan_mean_filter.html($value_mean_filter.val() + '%');
+    });
+
+    const $valueSpan_var_filter = $('.valueSpan_var_filter');
+    const $value_var_filter = $('#slider_var_filter');
+    $valueSpan_var_filter.html($value_var_filter.val() + '%');
+    $value_var_filter.on('input change', () => {
+      $valueSpan_var_filter.html($value_var_filter.val() + '%');
+    });
+  });
+</script>
+
